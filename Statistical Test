@@ -1,1 +1,203 @@
+import pandas
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
 
+turnstile_weather= pandas.read_csv("/Users/skootergirl01/Downloads/improved-dataset/turnstile_weather_v2.csv")
+
+"""Quiz 1: Exploratory data analysis. Doing a little extra exploratory data analysis..
+I find that this is not normal data. I ran a Shapiro-Wilk test and an Anderson-Darling test.
+The results really don't make sense. I should really investigate a little more into what these
+tests really do to understand my results though..."""
+
+def entries_histogram(turnstile_weather):
+    '''
+    Before we perform any analysis, it might be useful to take a
+    look at the data we're hoping to analyze. More specifically, let's 
+    examine the hourly entries in our NYC subway data and determine what
+    distribution the data follows. This data is stored in a dataframe
+    called turnstile_weather under the ['ENTRIESn_hourly'] column.
+    
+    Let's plot two histograms on the same axes to show hourly
+    entries when raining vs. when not raining. Here's an example on how
+    to plot histograms with pandas and matplotlib:
+    turnstile_weather['column_to_graph'].hist()
+    
+    Your histogram may look similar to bar graph in the instructor notes below.
+    
+    You can read a bit about using matplotlib and pandas to plot histograms here:
+    http://pandas.pydata.org/pandas-docs/stable/visualization.html#histograms
+    
+    You can see the information contained within the turnstile weather data here:
+    https://s3.amazonaws.com/content.udacity-data.com/courses/ud359/turnstile_data_master_with_weather.csv
+    '''
+    
+    plt.figure()
+    rainy = turnstile_weather[turnstile_weather['rain']==1]['ENTRIESn_hourly']
+    no_rainy = turnstile_weather[turnstile_weather['rain']==0]['ENTRIESn_hourly']
+
+    plt.hist([rainy,no_rainy], bins=25, alpha=0.85,range=(0,20000),color=('blue','red'))
+    plt.show()
+    return plt
+
+entries_histogram(turnstile_weather)
+#rainy=turnstile_weather[turnstile_weather['rain']==1]['ENTRIESn_hourly']
+#print stats.shapiro(rainy)
+#print stats.anderson(rainy)
+
+def mann_whitney_plus_means(turnstile_weather):
+    '''
+    This function will consume the turnstile_weather dataframe containing
+    our final turnstile weather data. 
+    
+    You will want to take the means and run the Mann Whitney U-test on the 
+    ENTRIESn_hourly column in the turnstile_weather dataframe.
+    
+    This function should return:
+        1) the mean of entries with rain
+        2) the mean of entries without rain
+        3) the Mann-Whitney U-statistic and p-value comparing the number of entries
+           with rain and the number of entries without rain
+    
+    You should feel free to use scipy's Mann-Whitney implementation, and you 
+    might also find it useful to use numpy's mean function.
+    
+    Here are the functions' documentation:
+    http://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.mannwhitneyu.html
+    http://docs.scipy.org/doc/numpy/reference/generated/numpy.mean.html
+    
+    You can look at the final turnstile weather data at the link below:
+    https://s3.amazonaws.com/content.udacity-data.com/courses/ud359/turnstile_data_master_with_weather.csv
+    '''
+    
+    x=turnstile_weather[['ENTRIESn_hourly']][turnstile_weather.rain==0]
+    y=turnstile_weather[['ENTRIESn_hourly']][turnstile_weather.rain==1]
+    without_rain_mean=np.mean(x)
+    with_rain_mean=np.mean(y)
+    Up=scipy.stats.mannwhitneyu(x,y)
+    U,p=Up
+    #print with_rain_mean[0] 
+    results=(with_rain_mean[0],without_rain_mean[0],U,p)
+    return results 
+print mann_whitney_plus_means(turnstile_weather)
+
+
+def day_of_week_visualization(turnstile_weather):
+    '''
+    I want to take a look at ridership on specific days of the week. I want to see 
+    if there is a clear distinction between weekends and weekdays. I am guessing that
+    there will be not much difference between a Saturday and a Friday. But a lot of difference between
+    Tuesdays and Fridays, etc.'''
+    
+    plt.figure()
+    sun= turnstile_weather[turnstile_weather['day_week']==6]['ENTRIESn_hourly']
+    mon = turnstile_weather[turnstile_weather['day_week']==0]['ENTRIESn_hourly']
+    tues = turnstile_weather[turnstile_weather['day_week']==1]['ENTRIESn_hourly']
+    wed = turnstile_weather[turnstile_weather['day_week']==2]['ENTRIESn_hourly']
+    thur = turnstile_weather[turnstile_weather['day_week']==3]['ENTRIESn_hourly']
+    fri = turnstile_weather[turnstile_weather['day_week']==4]['ENTRIESn_hourly']
+    sat = turnstile_weather[turnstile_weather['day_week']==5]['ENTRIESn_hourly']
+    
+    plt.hist([sun,mon,tues,fri,sat], bins=10, alpha=0.85,range=(0,10000),color=('yellow','red','orange','black','purple'))
+    plt.show()
+    return plt
+    
+    
+day_of_week_visualization(turnstile_weather)
+
+"""Not a very good plot to say anything definitive but let's check up if it is normal.
+It doesn't look it, but what can we see from the Shapiro-Wilk test or the Anderson-Darling
+test."""
+
+sun= turnstile_weather[turnstile_weather['day_week']==6]['ENTRIESn_hourly']
+mon = turnstile_weather[turnstile_weather['day_week']==0]['ENTRIESn_hourly']
+tues = turnstile_weather[turnstile_weather['day_week']==1]['ENTRIESn_hourly']
+wed = turnstile_weather[turnstile_weather['day_week']==2]['ENTRIESn_hourly']
+thur = turnstile_weather[turnstile_weather['day_week']==3]['ENTRIESn_hourly']
+fri = turnstile_weather[turnstile_weather['day_week']==4]['ENTRIESn_hourly']
+sat = turnstile_weather[turnstile_weather['day_week']==5]['ENTRIESn_hourly']
+
+#print stats.shapiro(sun)
+#This gave me a p-value of zero... lol
+
+#print stats.anderson(sun) This gives us a test statistic of infinity...
+
+#Creating a dataframe where can compare multiple days
+def p_val(x,y):
+    U, p =stats.mannwhitneyu(x,y)
+    return p
+
+week=[sun,mon,tues,wed,thur,fri,sat]
+sweek=['sun','mon','tues','wed','thurs','fri','sat']
+j=0
+for day in week:
+    print sweek[j]
+    print np.mean(day)
+    for i in range(len(sweek)):
+        print sweek[j]+" v.s. "+sweek[i]+":"+ str(p_val(day,week[i]))
+    j+=1
+"""I find the results of the Mann-Whitney test for the days of the week to be interesting. It appears that Thursday has the highest average
+of entries for any day of the week, but it's value is significant. While Sunday has the lowest. I have pasted the output below:
+sun
+1066.43610578
+sun v.s. sun:0.499999122641
+sun v.s. mon:1.99201837983e-54
+sun v.s. tues:1.66247747528e-131
+sun v.s. wed:1.74860236449e-126
+sun v.s. thurs:3.25455951892e-131
+sun v.s. fri:2.02572602214e-143
+sun v.s. sat:5.05820863686e-16
+mon
+1825.26490728
+mon v.s. sun:1.99201837983e-54
+mon v.s. mon:0.499999167537
+mon v.s. tues:5.51614447275e-18
+mon v.s. wed:2.14084485486e-21
+mon v.s. thurs:3.29853056073e-23
+mon v.s. fri:1.89164933113e-27
+mon v.s. sat:1.06841922381e-11
+tues
+2164.83643334
+tues v.s. sun:1.66247747528e-131
+tues v.s. mon:5.51614447275e-18
+tues v.s. tues:0.499999173384
+tues v.s. wed:0.0533591712554
+tues v.s. thurs:0.0199596481657
+tues v.s. fri:0.0019104880063
+tues v.s. sat:1.74949816452e-50
+wed
+2297.09795695
+wed v.s. sun:1.74860236449e-126
+wed v.s. mon:2.14084485486e-21
+wed v.s. tues:0.0533591712554
+wed v.s. wed:0.499998796274
+wed v.s. thurs:0.348077564471
+wed v.s. fri:0.123254094302
+wed v.s. sat:5.92590298717e-53
+thurs
+2317.07237922
+thurs v.s. sun:3.25455951892e-131
+thurs v.s. mon:3.29853056073e-23
+thurs v.s. tues:0.0199596481657
+thurs v.s. wed:0.348077564471
+thurs v.s. thurs:0.499998797261
+thurs v.s. fri:0.225143481255
+thurs v.s. sat:8.21241907566e-56
+fri
+2277.37229358
+fri v.s. sun:2.02572602214e-143
+fri v.s. mon:1.89164933113e-27
+fri v.s. tues:0.0019104880063
+fri v.s. wed:0.123254094302
+fri v.s. thurs:0.225143481255
+fri v.s. fri:0.499998785657
+fri v.s. sat:1.65513865744e-62
+sat
+1383.90147874
+sat v.s. sun:5.05820863686e-16
+sat v.s. mon:1.06841922381e-11
+sat v.s. tues:1.74949816452e-50
+sat v.s. wed:5.92590298717e-53
+sat v.s. thurs:8.21241907566e-56
+sat v.s. fri:1.65513865744e-62
+sat v.s. sat:0.499998772129"""
