@@ -183,3 +183,95 @@ def compute_r_squared(data, predictions):
     
     return r_squared
 print compute_r_squared(values, predictions)
+
+
+#---------------------------
+#Analyzing using OLS
+
+import numpy as np
+import pandas
+import scipy
+import statsmodels.api as sm
+#from sklearn import datasets, linear_model
+
+dataframe = pandas.read_csv("/Users/skootergirl01/Downloads/improved-dataset/turnstile_weather_v2.csv")
+
+"""
+In this optional exercise, you should complete the function called 
+predictions(turnstile_weather). This function takes in our pandas 
+turnstile weather dataframe, and returns a set of predicted ridership values,
+based on the other information in the dataframe.  
+
+In exercise 3.5 we used Gradient Descent in order to compute the coefficients
+theta used for the ridership prediction. Here you should attempt to implement 
+another way of computing the coeffcients theta. You may also try using a reference implementation such as: 
+http://statsmodels.sourceforge.net/devel/generated/statsmodels.regression.linear_model.OLS.html
+
+One of the advantages of the statsmodels implementation is that it gives you
+easy access to the values of the coefficients theta. This can help you infer relationships 
+between variables in the dataset.
+
+You may also experiment with polynomial terms as part of the input variables.  
+
+The following links might be useful: 
+http://en.wikipedia.org/wiki/Ordinary_least_squares
+http://en.wikipedia.org/w/index.php?title=Linear_least_squares_(mathematics)
+http://en.wikipedia.org/wiki/Polynomial_regression
+
+This is your playground. Go wild!
+
+How does your choice of linear regression compare to linear regression
+with gradient descent computed in Exercise 3.5?
+
+You can look at the information contained in the turnstile_weather dataframe below:
+https://s3.amazonaws.com/content.udacity-data.com/courses/ud359/turnstile_data_master_with_weather.csv
+
+Note: due to the memory and CPU limitation of our amazon EC2 instance, we will
+give you a random subset (~10%) of the data contained in turnstile_data_master_with_weather.csv
+
+If you receive a "server has encountered an error" message, that means you are hitting 
+the 30 second limit that's placed on running your program. See if you can optimize your code so it
+runs faster.
+""" 
+def normalize_features(df):
+    """
+    Normalize the features in the data set.
+    """
+    mu = df.mean()
+    sigma = df.std()
+    
+    if (sigma == 0).any():
+        raise Exception("One or more features had the same value for all samples, and thus could " + \
+                         "not be normalized. Please do not include features with only a single value " + \
+                         "in your model.")
+    df_normalized = (df - df.mean()) / df.std()
+
+    return df_normalized, mu, sigma
+    
+def predictions(weather_turnstile):
+    # select the features to use
+    feature_names = ['rain','precipi','meantempi','hour']
+    
+    # Y values
+    Y = weather_turnstile['ENTRIESn_hourly']
+    
+    # initialize the X features ==> add dummy units, normalize, and add constant to allow for intercept in regression
+    dummy_unit = pandas.get_dummies(weather_turnstile['UNIT'], prefix='unit')
+    dummy_day = pandas.get_dummies(weather_turnstile['day_week'], prefix='day')
+    X = weather_turnstile[feature_names].join(dummy_unit)
+    X = X.join(dummy_day)
+    X, mu, sigma = normalize_features(X)
+    X = sm.add_constant(X)
+    
+    # ordinary least squares model
+    model = sm.OLS(Y,X)
+    
+    # fit the model
+    results = model.fit()
+    print results.summary()
+    
+    # predict
+    prediction = results.predict(X)
+    
+    #return prediction
+predictions(dataframe)
